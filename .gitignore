@@ -1,6 +1,6 @@
 # Images
 thumbnails/*
-
+*.jpg
 *.png
 
 # Byte-compiled / optimized / DLL files

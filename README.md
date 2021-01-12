@@ -28,7 +28,8 @@ optional arguments:
                         Override default thumbnail size of 200x200
 ```
 Here's an example which generated thumbnails of size 50 pixels by 50 pixels:
-`python snip_characters.py json/sample.json thumbnails/ canopic_box --t 50 50
-
+```
+python snip_characters.py json/sample.json thumbnails/ canopic_box --t 50 50
+```
 Note that for now, the original images need to be in the reference_images folder. This will probably be fixed later.
 
