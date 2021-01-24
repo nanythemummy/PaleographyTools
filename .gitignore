@@ -6,7 +6,10 @@ json/*
 processed_json/*
 outputjson/*
 .DS_Store
-
+ptenv/*
+ptenv
+.idea/*
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

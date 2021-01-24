@@ -68,7 +68,7 @@ is moved to the "processed_json folder"
 
 
 ````
-###Running the Script:
+### Running the Script:
 
 When you have your directories set up, your original images stored in the reference_images folder,  and your COCO Json files created and stored in the appropriate directory,
 
@@ -78,11 +78,11 @@ Python snip_characters.py
 
 From here, you can use the master json file to insert the thumbnails of the images in a database of your chosing.
 
-####Known Issues and Caveats
-#####Requirements for Gardiner Codes
+#### Known Issues and Caveats
+##### Requirements for Gardiner Codes
 If you are using Gardiner Codes as your labels for an egyptological paleography, note that the codes must be in the format:Xy00z where X is an uppercase letter, y is an optional lowercase letter, the zeros are numbers (the second of which is optional) and the final z is an optional letter for a variant. If you enter something that isn't in this format, you will get an exception.
 
-####I don't like the size of the resulting images
+#### I don't like the size of the resulting images
 Image sizes can be changed in the Consts.py file, where the following are tuples of height and width.
 ````
     ICONOGRAPHY_SAMPLE_SIZE=(300,300)
@@ -91,32 +91,32 @@ Image sizes can be changed in the Consts.py file, where the following are tuples
 ````
 Some of the directories can also be changed in this file.
 
-####The script is very slow at snipping large areas from the original image.
+#### The script is very slow at snipping large areas from the original image.
 Known issue. The script uses Pillow and uses the get_pixel function to check if every pixel in an area is inside the selected
 polygon. Python's lists are not the best datastructure for this, and the method is kind of slow anyway. I'm currently using
 numpy's arrays to implement a faster version, but it's not a high priority.
 
-####The master json file is in unicode.
+#### The master json file is in unicode.
 The master json file needs to be in unicode to handle using glyphs as labels for areas. Originally, I was doing this on the backend script which 
 imported the data into the database for my research, but it was just another set of command parameters for me to type
 and now that it's part of this script, I can share the functionality with you! Just make sure you have the right fonts, and that whatever code you write to handle the master json file can deal with unicode.
 
 ### GardinerTool.py
-####Purpose 
+#### Purpose 
 To help with the process of converting ascii representations of glyphs and transliterations into Unicode.
 
-####Requirements
+#### Requirements
 1. cltk (Classical Languages Toolkit)
 2. The requirements and unicode fonts mentioned above.
 
-####Usage
+#### Usage
 There are two scripts: get-glyph and get-translit One converts a gardiner signlist code into a unicode glyph, the other converst an ASCII Manuel de Codage string into transliteration characters in unicode.
-#####get-glyph
+##### get-glyph
 ````
 python GardinerTool.py get-glyph B1
 result is [unicode hieroglyph not supported in readme apparently]
 ````
-#####get-translit
+##### get-translit
 ````
 python GardinerTool.py get-translit "Ink sAH=k"
 Result is [unicode translit characters not supported in readme apparently]
