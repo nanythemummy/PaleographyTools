@@ -11,13 +11,18 @@ from datetime import datetime
 from PIL import Image
 from shapely.geometry import Point
 from shapely.geometry import Polygon
+from Consts import Consts
+from GardinerTool import *
+import random, string
 
 
-def get_filename(name, imagefile, annotation_id, category, outpath):
+def get_filename(name, imagefile, category):
+    outpath=os.path.join(os.getcwd(),Consts.OUTPUT_THUMBNAIL_DIR)
     imagename = os.path.splitext(imagefile)[0] # get the second part of the path, which is the filename
     # string might have translit characters in it, so we need to strip that out.
-    category = "".join(c for c in category if c.isalnum())
-    return f"{outpath}{name}-{imagename}_{category}_{annotation_id}.png"
+    uniquish_id = ''.join(random.SystemRandom().choice(string.ascii_uppercase+string.digits) for _ in range(5))
+    category = ''.join(c for c in category if c.isalnum())
+    return os.path.join(outpath,f"{name}-{imagename}_{category}_{uniquish_id}.png")
 
 
 # accessing the pixel array through pillow is slow, but works.
@@ -49,8 +54,23 @@ def process_area(imagehandle, areainfo, outputfilename, thumbsize):
     outimg.thumbnail((thumbsize[0], thumbsize[1]))
     outimg.save(f"{outputfilename}")
 
+def getLabelForType(jsonlabel,type):
+    if type==Consts.PALEOGRAPHY_TYPE:
+        return getUnicodeFromGardinerString(jsonlabel)
+    elif type==Consts.ORTHOGRAPHY_TYPE:
+        return getUnicodeForMdCTranslitString(jsonlabel)
+    else: #iconography
+        return jsonlabel
 
-def process_image(artefactname, inputjson, outputjson, imageinfo, outputdir, thumbsize):
+def getThumbsizeForType(type):
+    if type==Consts.PALEOGRAPHY_TYPE:
+        return Consts.PALEOGRAPHY_SAMPLE_SIZE
+    elif type==Consts.ICONOGRAPHY_TYPE:
+        return Consts.ICONOGRAPHY_SAMPLE_SIZE
+    else:
+        return Consts.ORTHOGRAPHY_SAMPLE_SIZE
+
+def process_image(artefactname, inputjson, outputjson, imageinfo, type):
     imagename, w, h, iid = (
         imageinfo["file_name"],
         imageinfo["width"],
@@ -65,55 +85,79 @@ def process_image(artefactname, inputjson, outputjson, imageinfo, outputdir, thu
             if not annotation["image_id"] == iid:
                 continue
             # find the category for it.
-            cat_id = None
             cat_label = None
             for category in inputjson["categories"]:
                 if category["id"] == annotation["category_id"]:
-                    cat_id = category["id"]
-                    cat_label = category["name"]
+                    cat_label = getLabelForType(category["name"], type)
                     break
             # generate a unique-ish filename for the new image thumbnail.
             outname = get_filename(
-                artefactname, imagename, annotation["id"], cat_label, outputdir
+                artefactname, imagename, type
             )
-            process_area(imgrgba, annotation, outname, thumbsize)
+            process_area(imgrgba, annotation, outname, getThumbsizeForType(type))
             area_entry = {"thumbnail": outname, "origin": imagename, "label": cat_label}
             outputjson.append(area_entry)
 
+def processJSONFiles(dir,outjson,artifactname,type):
+    with os.scandir(dir) as it:
+        for f in it:
+            if os.path.isfile(f):
+                fullpath=os.path.join(dir,f)
+                extension=os.path.splitext(os.path.join(fullpath))[1]
+                if extension == ".json":
+                    with open(fullpath) as jsonfile:
+                        cocojson = json.load(jsonfile)
+                        for item in cocojson["images"]:
+                            process_image(artifactname,cocojson,outjson,item,type)
+                    outname=os.path.join(os.path.join(os.getcwd(),Consts.USED_JSON_DIRECTORY),f.name)
+                    os.rename(fullpath,outname)
 
-def init(args):
-    outjson = {"artefact": args.name, "paleography": []}
-    cocojson = {}
-    thumbsize = [200, 200] if not args.t else [args.t[0], args.t[1]]
-    with open(args.input) as f:
-        cocojson = json.load(f)
-    for item in cocojson["images"]:
-        process_image(
-            outjson["artefact"],
-            cocojson,
-            outjson["paleography"],
-            item,
-            args.output,
-            thumbsize,
-        )
+
+
+def processPaleographyType(dir,outjson,aname):
+
+    types=[Consts.ORTHOGRAPHY_TYPE,Consts.PALEOGRAPHY_TYPE,Consts.ICONOGRAPHY_TYPE]
+    with os.scandir(dir) as it:
+        for f in it:
+            if os.path.isdir(os.path.join(dir, f)):
+                if f.name in types:
+                    typename=f.name
+                    outjson[typename]=[]
+                    processJSONFiles(os.path.join(dir,typename),outjson[typename],aname,typename)
+
+def processArtifacts(outjson):
+    jsondir = os.path.join(os.getcwd(), "json")
+    with os.scandir(jsondir) as it:
+        for f in it:
+            if os.path.isdir(os.path.join(jsondir,f)):
+                artifactname=f.name
+                outjson[artifactname] = {}
+                processPaleographyType(os.path.join(jsondir, artifactname), outjson[artifactname],artifactname)
+
+def setupDirs():
+    current = os.getcwd()
+    thumbsdir= os.path.join(current, Consts.OUTPUT_THUMBNAIL_DIR)
+    jsondir=os.path.join(current,Consts.OUTPUT_JSON_DIRECTORY)
+    usedjsondir=os.path.join(current,Consts.USED_JSON_DIRECTORY)
+    if not os.path.exists(thumbsdir):
+        os.mkdir(thumbsdir)
+    if not os.path.exists(jsondir):
+        os.mkdir(jsondir)
+    if not os.path.exists(usedjsondir):
+        os.mkdir(usedjsondir)
+
+def init():
+    setupDirs()
+    #process directories
+    outjson = {}
+    processArtifacts(outjson)
     timestamp=datetime.now().strftime("%m-%d-%y_%H-%M")
-    outfilename=f"{args.name}_{timestamp}.json"
-    with open(outfilename,'w') as f:
-        json.dump(outjson,f)
+    outfilename=f"Paleography_{timestamp}.json"
+    outdir = os.path.join(os.path.join(os.getcwd(),Consts.OUTPUT_JSON_DIRECTORY),outfilename)
+    with open(outdir,'w') as f:
+        json.dump(outjson,f,ensure_ascii=False)
     
     
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument("input", help="Path of Input JSON file.")
-parser.add_argument("output", help="Path where the output images ought to go.")
-parser.add_argument("name", help="What artifact is this associated with?")
-parser.add_argument(
-    "--t",
-    "--thumbnail",
-    help="Override default thumbnail size of 200x200",
-    nargs=2,
-    type=int,
-)
-args = parser.parse_args()
-init(args)
+if __name__=="__main__":
+    init()

@@ -1,0 +1,12 @@
+class Consts:
+    ICONOGRAPHY_SAMPLE_SIZE=(300,300)
+    PALEOGRAPHY_SAMPLE_SIZE=(75,75)
+    ORTHOGRAPHY_SAMPLE_SIZE=(100,100)
+    PALEOGRAPHY_TYPE="Paleography"
+    ORTHOGRAPHY_TYPE="Orthography"
+    ICONOGRAPHY_TYPE="Iconography"
+    FORBIDDEN_FOLDERS=[".DS_Store"]
+    OUTPUT_THUMBNAIL_DIR="thumbnails"
+    OUTPUT_JSON_DIRECTORY="outputjson"
+    USED_JSON_DIRECTORY="processed_json"
+

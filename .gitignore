@@ -2,6 +2,11 @@
 thumbnails/*
 *.jpg
 *.png
+json/*
+processed_json/*
+outputjson/*
+.DS_Store
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
