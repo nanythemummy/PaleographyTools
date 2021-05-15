@@ -33,7 +33,13 @@ def copy_slow(inputimg, outputimg, bbox, region):
         for by in range(0, bbox["h"]):
             pt = Point(bbox["x"] + bx, bbox["y"] + by)
             if region.contains(pt):
-                outpixels[bx, by] = pixels[bx + bbox["x"], by + bbox["y"]]
+                try:
+                    outpixels[bx, by] = pixels[bx + bbox["x"], by + bbox["y"]]
+                except IndexError as e:
+                    print(f"Error with boundingbox: Did you rotate the image and forget to save properly? {bbox}")
+                    raise e
+
+
 
 
 # This function takes a handle to a large image and an array of segmentation values from a cocojson file. It will copy the area specified by
@@ -87,9 +93,13 @@ def process_image(artefactname, inputjson, outputjson, imageinfo, type):
             # find the category for it.
             cat_label = None
             for category in inputjson["categories"]:
-                if category["id"] == annotation["category_id"]:
-                    cat_label = getLabelForType(category["name"], type)
-                    break
+                try:
+                    if category["id"] == annotation["category_id"]:
+                        cat_label = getLabelForType(category["name"], type)
+                        break
+                except KeyError as e:
+                    print(f"error{e} : Did you forget to assign a label to an annotation?")
+                    raise e
             # generate a unique-ish filename for the new image thumbnail.
             outname = get_filename(
                 artefactname, imagename, type

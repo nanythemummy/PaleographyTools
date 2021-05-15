@@ -8,6 +8,16 @@ def getUnicodeForMdCTranslitString(inputstring):
     print(f"Result is {uc}")
     return uc
 
+def transliterationSort(listofstrings):
+    #takes a list of strings and sorts it in the order of appearance of the items in the hieroglyphic egyptian dictionary.
+    #this expects a list or dict keyed by a unicode transliteration char, not mdc.
+    alphabet=[' ','.', '⸗', '-', 'ꜣ', 'i', '҆', 'i', '҆', 'j', 'y', 'ꜥ', 'w', 'b', 'p', 'f', 'm', 'n', 'r', 'h', 'ḥ', 'ḫ', 'ẖ', 's',
+     'z', 'š', 'q', 'K', 'k', 'g', 't', 'ṯ', 'd', 'ḏ']
+    awithnums = ["{num}".format(num=n) for n in range(0, 9)] + alphabet
+    weights = [n for n in range(0,len(awithnums))]
+    alphabethash=dict(zip(awithnums,weights))
+    retlist= sorted(listofstrings, key=lambda word: [alphabethash[a.lower()] for a in word])
+    return retlist
 
 def getUnicodeFromGardinerString(inputstring):
     listofchars = inputstring.split('-')
@@ -59,6 +69,8 @@ if __name__=="__main__":
     gtranslitparser=subparsers.add_parser('get-translit', help="Get the translation font unicode equivalent of an MdC string. ")
     gtranslitparser.add_argument("inputstring",help="A string in Manuel de Codage.(MdC)")
     gtranslitparser.set_defaults(func=parseGetTranslitForMdCString)
+    galphabettest=subparsers.add_parser("test_alphabet", help="test alphabet")
+    galphabettest.set_defaults(func=transliterationSort(listofstrings=['ꜥhꜥ','ꜣšꜣ','šri҆','ḫ.t nb.t nfr.t','mḥy.t',' ꜣqꜥ','ni҆w.ty']))
     args = parser.parse_args()
     if hasattr(args,"func"):
         args.func(args)
