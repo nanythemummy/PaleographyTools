@@ -52,6 +52,24 @@ def getUnicodeFromGardinerString(inputstring):
     print(f"result is {finalunicode}")
     return finalunicode
 
+def getGardinerStringFromUnicode(characters):
+    #Given a unicode hieroglyph, get the Gardiner Signlist Code. If multiple characters are provided, this will return
+    #a comma seperated string.
+
+    gardinersigns=[]
+    patt = re.compile('EGYPTIAN HIEROGLYPH (?P<category>[A-Za-z])0+(?P<glyph>[1-9]{1,3})(?P<variant>[a-z]{0,1})')
+    for char in list(characters):
+        udata = unicodedata.name(char)
+        res=patt.match(udata).groupdict()
+        if res['variant']:
+            res['variant']=res['variant'].lower()
+        else:
+            res['variant']=''
+        code = f"{res['category']}{res['glyph']}{res['variant']}"
+        gardinersigns.append(code)
+    gsigns=",".join(gardinersigns)
+    return gsigns
+
 def parseGetUnicodeFromGardinerString(args):
     return getUnicodeFromGardinerString(args.inputstring)
 
